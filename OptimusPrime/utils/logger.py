@@ -18,9 +18,11 @@ class Logger(object):
 
         now = datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')
         filename = ''.join([now,'_',filename])
-        filename = os.path.join('./logs',filename)
-
-        self.logger = logging.getLogger(filename)               # 根据文件名创建一个日志
+        cur_path = './logs'
+        if os.path.exists(cur_path):
+            self.logger = logging.getLogger(os.path.join(cur_path,filename))               # 根据文件名创建一个日志
+        else:
+            self.logger = logging.getLogger(filename)
         self.logger.setLevel(level)                             # 设置默认日志级别
         self.format_str = logging.Formatter(fmt)                # 设置日志格式
 

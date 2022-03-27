@@ -18,6 +18,8 @@ class Config(object):
         self.embed_dim = 100
         self.dropout = 0.5
         self.class_num = 2
+        self.bidirection = True
+        self.variable_len = True # LSTM是否使用变长操作
 
         # 不可通过参数传入修改
         self.hidden_size = 128
@@ -28,6 +30,8 @@ class Config(object):
         self.__name__ = name
 
     def update_config(self,conf):
+        if conf is None:
+            return
         if 'pretrained_path' in conf:
             self.pretrained_embedding_path = conf['pretrained_path']
         if 'embed_dim' in conf:
@@ -38,6 +42,10 @@ class Config(object):
             self.dropout = nn.Dropout(conf['dropout'])
         if 'class_num' in conf:
             self.class_num = conf['class_num']
+        if 'bidirection' in conf:
+            self.bidirection = conf['bidirection']
+        if 'variable_len' in conf:
+            self.variable_len = conf['variable_len']
 
 
 class LSTM(nn.Module):
@@ -52,7 +60,7 @@ class LSTM(nn.Module):
 
 
         self.lstm = nn.LSTM(self.config.embed_dim, self.config.hidden_size, self.config.num_layers,
-                            bidirectional=True, batch_first=True, dropout=self.config.dropout)
+                            bidirectional=self.config.bidirection, batch_first=True, dropout=self.config.dropout)
         self.fc = nn.Linear(self.config.hidden_size * 2, self.config.class_num)
 
     def init_embedding(self, embed_path):
@@ -67,26 +75,28 @@ class LSTM(nn.Module):
             embeddings = nn.Embedding(self.config.vocab_size, self.config.embed_dim)
         return embeddings
 
-    def forward(self, x):
+    def forward_without_pad(self, x):
         x, _ = x
         out = self.embedding(x)  # [batch_size, seq_len, embeding]=[128, 32, 300]
         out, _ = self.lstm(out)
         out = self.fc(out[:, -1, :])  # 句子最后时刻的 hidden state
         return out
+    def forward_with_pad(self,x):
+        x, seq_len = x[0], x[1]
+        out = self.embedding(x)
+        packed_data = nn.utils.rnn.pack_padded_sequence(out, seq_len, batch_first=True,
+                                                        enforce_sorted=False)  # 针对不定长输入做处理
+        idx_unsort = packed_data.unsorted_indices
+        out, (hn, cn) = self.lstm(packed_data)
+        if self.config.bidirection is True:
+            hidden = torch.cat((hn[-2], hn[-1]), dim=1)
+        else:
+            hidden = hn[-1]
+        hidden = hidden.index_select(0, idx_unsort)  # 恢复输入时数据的排序
+        out = self.fc(hidden)
+        return out
 
-    '''变长RNN，效果差不多，甚至还低了点...'''
-    # def forward(self, x):
-    #     x, seq_len = x
-    #     out = self.embedding(x)
-    #     _, idx_sort = torch.sort(seq_len, dim=0, descending=True)  # 长度从长到短排序（index）
-    #     _, idx_unsort = torch.sort(idx_sort)  # 排序后，原序列的 index
-    #     out = torch.index_select(out, 0, idx_sort)
-    #     seq_len = list(seq_len[idx_sort])
-    #     out = nn.utils.rnn.pack_padded_sequence(out, seq_len, batch_first=True)
-    #     # [batche_size, seq_len, num_directions * hidden_size]
-    #     out, (hn, _) = self.lstm(out)
-    #     out = torch.cat((hn[2], hn[3]), -1)
-    #     # out, _ = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
-    #     out = out.index_select(0, idx_unsort)
-    #     out = self.fc(out)
-    #     return out
+    def forward(self, x):
+        if self.config.variable_len is True:
+            return self.forward_with_pad(x)
+        return self.forward_without_pad(x)
