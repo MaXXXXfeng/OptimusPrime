@@ -71,7 +71,6 @@ def ensemble_model_result(train_path, test_path, val_path, task_type, save_path,
         all_models = tabular_model_names
     datas = [train_path, test_path, val_path]
 
-    all_models = ['LSTM', 'TextCNN']
     result = []
     for model_name in all_models:
         model_result = get_model_result(task_type=task_type, model_name=model_name, datas=datas, params=params)
