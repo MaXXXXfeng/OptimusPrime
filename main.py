@@ -11,8 +11,8 @@ if __name__ == '__main__':
     ## 文本分类模型参数
     text_params = {
         'class_num': 10,  # 类别数量
-        'epoch': 1,
-        'batch_size': 16,
+        'epoch': 5,
+        'batch_size': 64,
         'vocab_path': './data/sample_vocab.pkl',  # 词表路径 / 词表构建语料路径
         'build': False,  # 是否需要构建词表
         'save': False,  # 词表保存路径
