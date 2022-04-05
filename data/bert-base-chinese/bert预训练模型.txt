@@ -1,0 +1,6 @@
+
+模型路径：https://huggingface.co/bert-base-chinese/tree/main
+所需文件：
+1.config.json
+2.pytorch_model.bin
+3.vocab.txt

@@ -57,11 +57,11 @@ class TextDataset(Dataset):
         token_idx = []
 
         seq_len = len(tokens)
-        if len(tokens) < TEXT_CONF.PAD_SIZE:
-            tokens.extend([TEXT_CONF.PAD] * (TEXT_CONF.PAD_SIZE - len(tokens)))
+        if len(tokens) < TEXT_CONF.MAX_SEQ_LEN:
+            tokens.extend([TEXT_CONF.PAD] * (TEXT_CONF.MAX_SEQ_LEN - len(tokens)))
         else:
-            tokens = tokens[:TEXT_CONF.PAD_SIZE]
-            seq_len = TEXT_CONF.PAD_SIZE
+            tokens = tokens[:TEXT_CONF.MAX_SEQ_LEN]
+            seq_len = TEXT_CONF.MAX_SEQ_LEN
         for token in tokens:
             token_idx.append((self.vocab_dict.get(token, self.vocab_dict.get(TEXT_CONF.UNK))))
         return (np.array(token_idx), np.array(seq_len)), np.array(label)
@@ -139,7 +139,7 @@ def create_dataloader(data_path, vocab, tokenizer, frac=None, shuffle=False, **k
     if isinstance(vocab, str):
         build = kwargs.get('build_vocab', False)
         save = kwargs.get('save_vocab', None)
-        vocab = build_vocab(vocab, tokenizer, build, save) # 单独使用函数时，可以自动构建词表
+        vocab = build_vocab(vocab, tokenizer, build, save)  # 单独使用函数时，可以自动构建词表
 
     dataset = TextDataset(data_path, vocab, tokenizer)
     if frac is None:
@@ -196,10 +196,8 @@ def process_text_data(train_path, test_path, val_path, vocab_path, tokenizer, bu
 if __name__ == '__main__':
     from OptimusPrime.data.Tokenizers import token_by_word
 
-    train_path = '/Users/max/data/cnews/cnews_train.csv'
-    val_path = '/Users/max/data/cnews/cnews_val.csv'
-    test_path = '/Users/max/data/cnews/cnews_test.csv'
-    vocab_path = '/Users/max/data/cnews/cnews_vocab.pkl'
+    train_path = '../../../data/sampel_train.csv'
+    val_path = '../../../data/sampel_val.csv'
+    test_path = '../../../data/sampel_test.csv'
+    vocab_path = '../../../data/sample_vocab.pkl'
     a, b, c = process_text_data(train_path, test_path, vocab_path, token_by_word, **{'build': False})
-
-    # TODO： dataloader 加一个功能 example，用来随机显示一个数据例子

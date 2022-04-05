@@ -7,7 +7,6 @@
 
 import torch
 import torch.nn as nn
-import numpy as np
 from gensim.models import KeyedVectors
 
 class Config(object):
@@ -39,7 +38,7 @@ class Config(object):
         if 'vocab_size' in conf:
             self.vocab_size = conf['vocab_size']
         if 'dropout' in conf:
-            self.dropout = nn.Dropout(conf['dropout'])
+            self.dropout = conf['dropout']
         if 'class_num' in conf:
             self.class_num = conf['class_num']
         if 'bidirection' in conf:
@@ -76,12 +75,15 @@ class LSTM(nn.Module):
         return embeddings
 
     def forward_without_pad(self, x):
+        '''不使用变长输入'''
         x, _ = x
-        out = self.embedding(x)  # [batch_size, seq_len, embeding]=[128, 32, 300]
+        out = self.embedding(x)  # batch_size, seq_len, embeding]
         out, _ = self.lstm(out)
-        out = self.fc(out[:, -1, :])  # 句子最后时刻的 hidden state
+        out = self.fc(out[:, -1, :])
         return out
+
     def forward_with_pad(self,x):
+        '''根据输入序列长度进行变长模型'''
         x, seq_len = x[0], x[1]
         out = self.embedding(x)
         packed_data = nn.utils.rnn.pack_padded_sequence(out, seq_len, batch_first=True,

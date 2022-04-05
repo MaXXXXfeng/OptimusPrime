@@ -10,7 +10,7 @@ class TextDataConfig:
     MINI_FREQ = 1 # 词表最低词频
     UNK = '<UNK>' # 未登录字 标志符
     PAD = '<PAD>' # padding 字符
-    PAD_SIZE = 128
+    MAX_SEQ_LEN = 512 # 句子长度
 
 
 TEXT_CONF = TextDataConfig()

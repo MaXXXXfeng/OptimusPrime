@@ -34,7 +34,7 @@ class Config(object):
         if 'vocab_size' in conf:
             self.vocab_size = conf['vocab_size']
         if 'dropout' in conf:
-            self.dropout = nn.Dropout(conf['dropout'])
+            self.dropout = conf['dropout']
         if 'class_num' in conf:
             self.class_num = conf['class_num']
 
